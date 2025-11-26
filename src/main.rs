@@ -8,18 +8,18 @@ use dashmap::DashMap;
 use log::info;
 
 fn main() {
-    // Initialize logging
+    
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     info!("Starting Advanced WAF (BertV3 Enabled)...");
 
-    // Initialize Server
+    
     let mut server = Server::new(None).unwrap();
     server.bootstrap();
 
-    // Initialize AI Bridge (Loads Model ONCE)
+    
     let bridge = Arc::new(engine::PythonWafBridge::new());
     
-    // Initialize Rate Limiter
+    
     let rate_limiter = Arc::new(DashMap::new());
 
     let waf_logic = proxy::WafProxy { 
@@ -27,7 +27,7 @@ fn main() {
         rate_limiter 
     };
     
-    // Create Proxy Service
+    
     let mut service = http_proxy_service(&server.configuration, waf_logic);
     service.add_tcp("0.0.0.0:6188");
 
