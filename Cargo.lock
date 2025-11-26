@@ -29,6 +29,7 @@ dependencies = [
  "log",
  "pingora",
  "pyo3",
+ "regex",
  "serde_json",
  "tokio",
 ]

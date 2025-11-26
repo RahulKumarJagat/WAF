@@ -4,8 +4,10 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
+# Pingora from main branch
 pingora = { git = "https://github.com/cloudflare/pingora", branch = "main", features = ["lb", "openssl"] }
-pyo3 = { version = "0.23", features = ["auto-initialize"] }
+# PyO3: We need auto-initialize to manage the embedded interpreter
+pyo3 = { version = "0.23", features = ["auto-initialize", "macros"] }
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
 dashmap = "6.0"
@@ -14,3 +16,5 @@ env_logger = "0.11"
 serde_json = "1.0"
 chrono = "0.4"
 anyhow = "1.0"
+# Fast Regex in Rust (Much faster than calling Python for simple patterns)
+regex = "1.10"
