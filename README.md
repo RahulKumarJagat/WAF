@@ -1,6 +1,3 @@
-Here is the formatted `README.md` file. You can copy the code block below directly into your project's `README.md` file.
-
-````markdown
 # Advanced WAF (Web Application Firewall) 🦀🤖
 
 A next-generation, high-performance Web Application Firewall built with **Rust (Pingora)** and **Python (PyTorch/BERT)**. This project demonstrates a hybrid defense-in-depth architecture that combines the raw speed of async Rust with the semantic understanding of Deep Learning to block sophisticated web attacks.
@@ -121,5 +118,3 @@ This WAF loads a Transformer model into RAM. Ensure your machine has at least **
 
 MIT License
 
-```
-```
