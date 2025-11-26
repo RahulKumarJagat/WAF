@@ -1,107 +1,161 @@
+Advanced WAF (Web Application Firewall) 🦀🤖
 
+A next-generation, high-performance Web Application Firewall built with Rust (Pingora) and Python (PyTorch/BERT). This project demonstrates a hybrid defense-in-depth architecture that combines the raw speed of async Rust with the semantic understanding of Deep Learning to block sophisticated web attacks.
 
-````markdown
-# AI-Powered Web Application Firewall (WAF)
+🚀 Features
 
-![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange?logo=rust)
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
-![Security](https://img.shields.io/badge/Security-AI%20Powered-green)
+Hybrid Architecture:
 
-A hybrid, high-performance Web Application Firewall. This project leverages **Rust** for low-latency traffic interception and proxying, integrated with a **Python-based Deep Learning brain** to detect malicious payloads (SQLi, XSS, RCE) in real-time.
+Layer 1 (Rust): High-speed DDoS protection and Rate Limiting (100 req/min).
 
-## 📂 Repository Structure
+Layer 2 (Rust Regex): Instant blocking of known signatures (SQLi, Path Traversal) and static asset whitelisting.
 
-```text
+Layer 3 (Anti-Bot): User-Agent fingerprinting to block scanners (Nmap, Nikto, Nessus).
+
+Layer 4 (AI Brain): A fine-tuned BERTv3 model running in Python analyzes the semantic intent of payloads to catch obfuscated attacks (e.g., buried XSS, logic fraud) that bypass regex.
+
+Zero-Copy Bridge: Uses PyO3 to efficiently pass data between the Rust proxy and the embedded Python interpreter without serialization overhead.
+
+Async & Multi-threaded: Built on Cloudflare's Pingora framework to handle thousands of concurrent connections.
+
+Smart Logic Detection: Specifically trained to detect business logic attacks (e.g., price: 0.00 fraud attempts).
+
+🛠️ Tech Stack
+
+Core Proxy: Rust (Pingora framework)
+
+AI Engine: Python 3.10+
+
+ML Framework: PyTorch (Transformers)
+
+Model: BERT-v3 (Sequence Classification)
+
+FFI Bridge: PyO3
+
+State Management: DashMap (Concurrent Hashmap)
+
+📂 Project Structure
+
 .
-├── src/                # Rust Engine (Proxy & Traffic Handling)
-│   ├── main.rs         # Application Entry Point
-│   ├── engine.rs       # Interface between Rust and Python
-│   └── proxy.rs        # Async HTTP Proxy Logic
-├── waf_brain/          # AI Detection Core
-│   ├── core.py         # Main Classification Logic
-│   └── ai_model/       # Transformer Model & Tokenizers
-├── config/             # Configuration
-│   └── certs.pem       # SSL Certificates (See Setup)
-├── Cargo.toml          # Rust Dependencies
-└── pyproject.toml      # Python Dependencies
-````
+├── Cargo.toml              # Rust dependencies (Pingora, PyO3, Tokio)
+├── src
+│   ├── main.rs             # Entry point, Server initialization
+│   ├── proxy.rs            # WAF Logic (Rate Limiting, Regex, Request Filtering)
+│   └── engine.rs           # Rust-Python Bridge (PyO3)
+├── waf_brain
+│   ├── core.py             # Python AI Engine (Model Loading, Heuristics, Inference)
+│   └── ai_model/           # Directory containing your trained BERT model
+│       ├── config.json
+│       └── model.safetensors
+└── README.md
 
-## 🚀 Features
 
-  * **Hybrid Engine**: Combines the speed of Rust with the ecosystem of Python AI.
-  * **Deep Learning Detection**: Uses a `safetensors` model to understand context, reducing false positives compared to traditional Regex WAFs.
-  * **Real-Time Blocking**: Intercepts requests and blocks threats before they reach the upstream server.
-  * **Custom Tokenizer**: Includes specialized tokenization for web attack vectors.
+⚡ Quick Start
 
-## 🛠️ Installation & Setup
+Prerequisites
 
-### 1\. Prerequisites
+Rust Toolchain: Install via rustup.
 
-  * **Rust**: [Install Rust](https://rustup.rs/)
-  * **Python 3.10+**: Ensure Python is installed and added to your PATH.
+Python 3.10+: Ensure it is in your PATH.
 
-### 2\. Clone the Repository
+Python Dependencies:
 
-```bash
-git clone [https://github.com/RahulKumarJagat/WAF.git](https://github.com/RahulKumarJagat/WAF.git)
-cd WAF
-```
+pip install torch transformers
 
-### 3\. Setup Python Environment
 
-The Rust engine requires the Python environment to load the AI model.
+AI Model: Place your trained BERT model files inside waf_brain/ai_model/.
 
-```bash
-# Create a virtual environment
-python -m venv .venv
+Running the WAF
 
-# Activate the environment
-# Windows:
-.venv\Scripts\activate
-# Linux/Mac:
-source .venv/bin/activate
+Build and run the project in release mode for optimal performance.
 
-# Install dependencies
-pip install .
-```
-
-### 4\. Model Setup
-
-Ensure your AI model weights are present. If you cloned this repo without Git LFS, you may need to manually place `model.safetensors` into `waf_brain/ai_model/`.
-
-### 5\. SSL Configuration
-
-For HTTPS inspection, place your certificate file in the config directory:
-
-```bash
-# Ensure the config folder exists
-mkdir -p config
-# Place your certificate (Do not commit real keys to GitHub!)
-cp /path/to/your/certs.pem config/certs.pem
-```
-
-## 🏃‍♂️ Usage
-
-To start the WAF, use Cargo. This will compile the Rust source and link against the Python environment.
-
-```bash
-# Run in release mode for performance
+# The WAF will listen on 0.0.0.0:6188
 cargo run --release
-```
 
-*The WAF will start listening on the configured port (default: 8080/8000).*
 
-## ⚠️ Disclaimer
+Wait for the log message: [PYTHON BRAIN] Deep Learning Model Ready!
 
-This tool is for educational and defensive purposes only. Do not use this software to attack targets you do not have permission to test.
+🧪 Testing
 
-## 🤝 Contributing
+Use the included Python test scripts to verify the WAF's detection capabilities.
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+1. Robust Test Suite
 
-## 📄 License
+Tests "False Positives" (Math, JSON) vs "True Positives" (XSS, SQLi).
 
-[MIT](https://choosealicense.com/licenses/mit/)
+python3 waf_test_robust.py
 
-```
-```
+
+2. Manual Attack Examples (cURL)
+
+Blocked (SQL Injection):
+
+curl -v "[http://127.0.0.1:6188/search?q=union+select+password+from+users](http://127.0.0.1:6188/search?q=union+select+password+from+users)"
+# Result: 403 Forbidden
+
+
+Blocked (Logic Fraud):
+
+curl -v -X POST "[http://127.0.0.1:6188/checkout](http://127.0.0.1:6188/checkout)" \
+     -H "Content-Type: application/json" \
+     -d '{"item": "PS5", "price": "0.00"}'
+# Result: 403 Forbidden
+
+
+Allowed (Legitimate JSON):
+
+curl -v -X POST "[http://127.0.0.1:6188/api](http://127.0.0.1:6188/api)" \
+     -H "Content-Type: application/json" \
+     -d '{"id": 123, "status": "active"}'
+# Result: 404 (Passed WAF, Hit Upstream)
+
+
+🛡️ Defense in Depth Strategy
+
+Layer
+
+Technology
+
+Responsibility
+
+Latency Impact
+
+1
+
+Rust (DashMap)
+
+DDoS Protection: Rate limits IPs (100 req/min).
+
+~0.01ms
+
+2
+
+Rust (Regex)
+
+Fast Filter: Blocks obvious SQLi (UNION SELECT) & Bots.
+
+~0.1ms
+
+3
+
+Python (Heuristics)
+
+Sanity Check: Whitelists valid JSON/Math to reduce AI load.
+
+~0.5ms
+
+4
+
+Python (BERT)
+
+Deep Analysis: Detects semantic malice in ambiguous payloads.
+
+~50-150ms
+
+⚠️ Performance Note
+
+This WAF loads a Transformer model into RAM. Ensure your machine has at least 4GB of free RAM. If the process is Killed, you are running out of memory—try using a distilled model (e.g., DistilBERT) or reducing the max sequence length in core.py.
+
+📜 License
+
+MIT License
