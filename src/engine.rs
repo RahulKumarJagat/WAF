@@ -1,56 +1,64 @@
 use pyo3::prelude::*;
 use pyo3::types::PyModule;
-use log::{info, error};
+use log::{info, error}; // Removed 'debug' (Fixes unused import)
 use std::env;
 
 pub struct PythonWafBridge {
-    module_name: String,
-    class_name: String,
+    // Thread-safe reference to the Python object
+    waf_instance: Py<PyAny>,
 }
 
 impl PythonWafBridge {
     pub fn new() -> Self {
-        info!("Connecting to Python Interpreter...");
-        
-        Python::with_gil(|py| {
+        info!("Initializing Python WAF Bridge...");
+
+        let instance = Python::with_gil(|py| {
+            // 1. Setup Path
             let sys = py.import("sys").expect("Failed to import sys");
             let paths = sys.getattr("path").expect("Failed to get path");
-            
             let current_dir = env::current_dir().expect("Failed to get current dir");
-            let dir_str = current_dir.to_str().expect("Path contains invalid unicode");
             
-            paths.call_method1("append", (dir_str,)).expect("Failed to append path");
+            paths.call_method1("append", (current_dir.to_str().unwrap(),)).unwrap();
+
+            // 2. Import Module
+            let module = PyModule::import(py, "waf_brain.core")
+                .expect("CRITICAL: Could not load waf_brain.core. Check file structure.");
+
+            // 3. Instantiate Class
+            let waf_class = module.getattr("WafEngine").expect("Could not find WafEngine class");
+            let instance = waf_class.call0().expect("Failed to initialize WAF AI Model");
             
-            if let Err(e) = PyModule::import(py, "waf_brain.core") {
-                error!("Python could not find 'waf_brain/core.py'");
-                error!("Checked in: {}", dir_str);
-                error!("Error: {}", e);
-                panic!("Stopping WAF: AI Module Missing");
-            }
+            info!("Python AI Model loaded into memory successfully.");
+            
+            // FIX 1: Use .unbind() instead of .into_py(py)
+            // In PyO3 0.23+, unbind() detaches the object from the GIL lifetime 
+            // so we can store it in our struct.
+            instance.unbind()
         });
 
         Self {
-            module_name: "waf_brain.core".to_string(),
-            class_name: "WafEngine".to_string(),
+            waf_instance: instance,
         }
     }
 
     pub fn analyze(&self, method: &str, uri: &str, headers: &str, body: &str) -> f64 {
         Python::with_gil(|py| {
-            let module = PyModule::import(py, self.module_name.as_str())
-                .expect("Failed to load module");
-            
-            let waf_class = module.getattr(self.class_name.as_str())
-                .expect("Failed to get WAF class");
-            
-            let waf_instance = waf_class.call0().expect("Failed to instantiate WAF");
+            // FIX 2: Pass a Rust tuple directly. 
+            // Do NOT use PyTuple::new(). call_method1 automatically converts 
+            // Rust tuples into Python arguments.
             let args = (method, uri, headers, body);
             
-            match waf_instance.call_method1("inspect_request", args) {
-                Ok(result) => result.extract::<f64>().unwrap_or(0.0),
+            // FIX 3: Use .bind(py) to access the object
+            // We must re-bind the persistent object to the current GIL token 
+            // to call methods on it.
+            match self.waf_instance.bind(py).call_method1("inspect_request", args) {
+                Ok(result) => {
+                    // Extract the float result
+                    result.extract::<f64>().unwrap_or(0.0)
+                },
                 Err(e) => {
-                    error!("Python Execution Error: {}", e);
-                    0.0
+                    error!("AI Inference Failed: {}", e);
+                    0.0 
                 }
             }
         })
