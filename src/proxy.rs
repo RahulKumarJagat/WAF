@@ -10,7 +10,7 @@ use serde_json::json;
 use regex::Regex;
 use std::sync::LazyLock;
 
-// Pre-compile Regex in Rust for maximum performance (avoids re-compiling on every request)
+
 static STATIC_ASSETS: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"\.(jpg|jpeg|png|gif|css|js|ico|woff|ttf|svg)$").unwrap()
 });
@@ -21,14 +21,14 @@ static SQLI_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
 
 pub struct WafProxy {
     pub bridge: Arc<PythonWafBridge>,
-    // IP -> (Last Request Time, Request Count)
+    
     pub rate_limiter: Arc<DashMap<String, (Instant, u32)>>,
 }
 
 impl WafProxy {
-    // High-Speed DDoS Logic
+    
     fn check_rate_limit(&self, client_ip: &str) -> bool {
-        const MAX_REQUESTS: u32 = 100; // Allow 100 req/min (adjust for production)
+        const MAX_REQUESTS: u32 = 100; 
         const WINDOW: Duration = Duration::from_secs(60);
 
         let mut entry = self.rate_limiter.entry(client_ip.to_string()).or_insert((Instant::now(), 0));
@@ -54,8 +54,7 @@ impl ProxyHttp for WafProxy {
     }
 
     async fn request_filter(&self, session: &mut Session, _ctx: &mut Self::CTX) -> Result<bool> {
-        // --- LAYER 1: REAL IP & DDoS PROTECTION ---
-        // Correctly extract IP from Pingora's SocketAddr enum
+        
         let client_ip = match session.client_addr() {
             Some(SocketAddr::Inet(addr)) => addr.ip().to_string(),
             _ => "unknown".to_string(),
@@ -70,7 +69,7 @@ impl ProxyHttp for WafProxy {
             });
             warn!("{}", log.to_string());
             let _ = session.respond_error(429).await;
-            return Ok(true); // Stop processing
+            return Ok(true); 
         }
 
         let req_header = session.req_header();
@@ -79,14 +78,12 @@ impl ProxyHttp for WafProxy {
             .map(|x| x.as_str())
             .unwrap_or(req_header.uri.path());
 
-        // --- LAYER 2: FAST EXITS (RUST REGEX) ---
         
-        // 2a. Static Assets: Don't waste AI power on images/fonts
         if STATIC_ASSETS.is_match(uri) {
             return Ok(false);
         }
 
-        // 2b. Obvious SQL Injection: Catch low-hanging fruit cheaply in Rust
+        
         if SQLI_PATTERN.is_match(uri) {
             let log = json!({
                 "timestamp": chrono::Utc::now().to_rfc3339(),
@@ -100,7 +97,7 @@ impl ProxyHttp for WafProxy {
             return Ok(true);
         }
 
-        // --- LAYER 3: ANTI-BOT (User-Agent) ---
+        
         let ua = req_header.headers.get("user-agent")
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
@@ -119,16 +116,14 @@ impl ProxyHttp for WafProxy {
             return Ok(true);
         }
 
-        // --- LAYER 4: AI BRAIN (Deep Learning) ---
-        // Only suspicious or complex requests reach here.
-        // Construct a clean JSON payload for the Python engine.
+        
         let headers_json = json!({ "user-agent": ua }).to_string();
-        let body_preview = ""; // Phase 2: Implement body buffering if needed
+        let body_preview = ""; 
 
-        // Call Python BERT Model
+        
         let risk_score = self.bridge.analyze(method, uri, &headers_json, body_preview);
 
-        // Structured Log Entry
+        
         let log_entry = json!({
             "timestamp": chrono::Utc::now().to_rfc3339(),
             "client_ip": client_ip,
@@ -149,8 +144,7 @@ impl ProxyHttp for WafProxy {
     }
 
     async fn upstream_peer(&self, _session: &mut Session, _ctx: &mut Self::CTX) -> Result<Box<HttpPeer>> {
-        // Upstream Configuration (e.g., forwarding to Google for testing)
-        // In production, this would be your backend server IP.
+        
         let addr = ("142.250.193.206", 443); 
         let mut peer = Box::new(HttpPeer::new(addr, true, "google.com".to_string()));
         peer.sni = "google.com".to_string(); 
