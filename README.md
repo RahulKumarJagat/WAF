@@ -3,11 +3,6 @@ Here is the formatted `README.md` file. You can copy the code block below direct
 ````markdown
 # Advanced WAF (Web Application Firewall) 🦀🤖
 
-![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
-![Pingora](https://img.shields.io/badge/Cloudflare-Pingora-orange?style=for-the-badge)
-
 A next-generation, high-performance Web Application Firewall built with **Rust (Pingora)** and **Python (PyTorch/BERT)**. This project demonstrates a hybrid defense-in-depth architecture that combines the raw speed of async Rust with the semantic understanding of Deep Learning to block sophisticated web attacks.
 
 ## 🚀 Features
