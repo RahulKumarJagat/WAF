@@ -110,6 +110,9 @@ curl -v -X POST "[http://127.0.0.1:6188/api](http://127.0.0.1:6188/api)" \
 | **3** | Python (Heuristics) | **Sanity Check**: Whitelists valid JSON/Math to reduce AI load. | \~0.5ms |
 | **4** | Python (BERT) | **Deep Analysis**: Detects semantic malice in ambiguous payloads. | \~50-150ms |
 
+##  Preview
+![preview](images/waf.gif)
+
 ## ⚠️ Performance Note
 
 This WAF loads a Transformer model into RAM. Ensure your machine has at least **4GB of free RAM**. If the process is `Killed`, you are running out of memory—try using a distilled model (e.g., `DistilBERT`) or reducing the max sequence length in `core.py`.
